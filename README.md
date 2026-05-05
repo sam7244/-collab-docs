@@ -9,6 +9,7 @@ A **Google Docs-inspired** collaborative editor built from scratch to demonstrat
 ## Table of Contents
 
 - [Features](#features)
+- [CI Pipeline & Test Coverage](#ci-pipeline--test-coverage)
 - [System Architecture](#system-architecture)
 - [Architecture Diagram](#architecture-diagram)
 - [Data Flow — Edit Operation](#data-flow--edit-operation)
@@ -33,6 +34,92 @@ A **Google Docs-inspired** collaborative editor built from scratch to demonstrat
 - Inactivity notifications — owners are emailed when their document has been idle
 - Microservice isolation — each service has its own database schema
 - Full event streaming via Kafka — edit events are decoupled from persistence
+
+---
+
+## CI Pipeline & Test Coverage
+
+Every push to `main` or `develop` (touching `backend/`) triggers the GitHub Actions CI pipeline which compiles all modules, runs the full test suite, and generates JaCoCo coverage + Surefire reports as downloadable artifacts.
+
+### CI Pipeline Flow
+
+```mermaid
+flowchart LR
+    Push["Push to main/develop"]
+    Checkout["Checkout source\nactions/checkout@v4"]
+    Java["Set up Java 17\nTemurin distribution"]
+    Verify["mvn verify\ncompile → test → package"]
+    Surefire["Upload Surefire Reports\nXML + TXT artifacts"]
+    Jacoco["Upload JaCoCo Reports\nHTML coverage artifacts"]
+    Reporter["dorny/test-reporter\nJUnit summary in GitHub UI"]
+    JARs["Upload service JARs\nauth, doc, collab, gateway"]
+
+    Push --> Checkout --> Java --> Verify
+    Verify --> Surefire
+    Verify --> Jacoco
+    Verify --> Reporter
+    Verify --> JARs
+```
+
+### Test Suite Summary
+
+| Service | Test Classes | Tests | Passed | Failed |
+|---|---|---|---|---|
+| auth-service | 5 | 24 | ✅ 24 | ❌ 0 |
+| document-service | 5 | 37 | ✅ 37 | ❌ 0 |
+| collaboration-service | 4 | 21 | ✅ 21 | ❌ 0 |
+| api-gateway | 3 | 11 | ✅ 11 | ❌ 0 |
+| **Total** | **17** | **93** | **✅ 93** | **❌ 0** |
+
+### JaCoCo Coverage Report — By Service
+
+> Numbers sourced from `mvn verify` JaCoCo XML reports.
+
+| Service | Line Coverage | Branch Coverage | Instruction Coverage | Method Coverage | Class Coverage |
+|---|---|---|---|---|---|
+| api-gateway | **94.4%** (34/36) | **87.5%** (7/8) | **96.6%** (140/145) | **90.0%** (9/10) | **100%** (4/4) |
+| document-service | **90.5%** (182/201) | **81.2%** (13/16) | **90.2%** (727/806) | **83.3%** (60/72) | **88.2%** (15/17) |
+| collaboration-service | **90.8%** (128/141) | **65.8%** (25/38) | **91.1%** (532/584) | **84.6%** (22/26) | **83.3%** (5/6) |
+| auth-service | **82.0%** (114/139) | **72.2%** (13/18) | **84.6%** (521/616) | **73.7%** (42/57) | **92.9%** (13/14) |
+
+### JaCoCo Coverage — Package Level Detail
+
+```mermaid
+xychart-beta
+    title "Line Coverage % by Package"
+    x-axis ["auth.service", "auth.oauth2", "auth.exception", "auth.controller", "doc.scheduler", "doc.kafka", "doc.exception", "doc.service", "doc.controller", "collab.handler", "collab.kafka", "collab.presence", "collab.controller", "gateway.filter", "gateway"]
+    y-axis "Coverage %" 0 --> 100
+    bar [100, 97, 100, 69, 100, 100, 100, 85, 83, 94, 100, 100, 100, 100, 78]
+```
+
+| Package | Lines Covered | Line % | Notes |
+|---|---|---|---|
+| `auth.service` | 35 / 35 | **100%** | AuthService + JwtService fully covered |
+| `auth.oauth2` | 38 / 39 | **97.4%** | All OAuth2 flows: new user, link, returning |
+| `auth.exception` | 13 / 13 | **100%** | All 3 exception handlers verified |
+| `auth.controller` | 9 / 13 | **69.2%** | Core endpoints covered; OAuth2 redirect endpoint not unit-testable |
+| `auth.entity` | 13 / 20 | **65.0%** | Setters exercised; unused getters excluded |
+| `auth.config` | 0 / 11 | **0%** | Spring Security config — wired at runtime, not unit-testable |
+| `doc.scheduler` | 68 / 68 | **100%** | All scheduler branches, email service, auth client covered |
+| `doc.kafka` | 25 / 25 | **100%** | Both Kafka listeners fully covered |
+| `doc.exception` | 13 / 13 | **100%** | All 3 exception handlers verified |
+| `doc.service` | 29 / 34 | **85.3%** | All CRUD + snapshot + touch paths covered |
+| `doc.controller` | 10 / 12 | **83.3%** | All REST endpoints + snapshot endpoint covered |
+| `collab.handler` | 80 / 85 | **94.1%** | Connect/disconnect/broadcast/JWT rejection all tested |
+| `collab.kafka` | 19 / 19 | **100%** | Both Kafka topics, payload shape, error path covered |
+| `collab.presence` | 24 / 24 | **100%** | All Redis ops + error swallowing covered |
+| `collab.controller` | 4 / 4 | **100%** | Presence endpoint fully covered |
+| `gateway.filter` | 27 / 27 | **100%** | All JWT filter paths: valid, invalid, public, WebSocket |
+| `gateway` (controllers) | 7 / 9 | **77.8%** | Ping + Fallback controllers tested |
+
+### What Is Not Covered (and Why)
+
+| Class | Coverage | Reason |
+|---|---|---|
+| `*Application.java` (main classes) | ~33% | Spring Boot entry points — `main()` runs the full container, excluded from unit test scope |
+| `SecurityConfig` | 0% | Declarative Spring Security DSL — correctness verified by integration behaviour, not unit tests |
+| `WebSocketConfig` | 0% | Spring wiring config — registers the WebSocket handler at a URL path, no business logic |
+| `RestTemplateConfig` | 0% | Single-bean config — creates a `RestTemplate`, nothing to assert |
 
 ---
 

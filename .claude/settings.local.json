@@ -128,7 +128,10 @@
       "Bash(git push:*)",
       "Bash(git reset:*)",
       "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && grep -A5 \"<build>\" {} | head -20')",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(mvn test:*)",
+      "Bash(./mvnw verify:*)",
+      "Bash(python3:*)"
     ]
   }
 }
