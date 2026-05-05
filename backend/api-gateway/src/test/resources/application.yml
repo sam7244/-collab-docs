@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    gateway:
+      routes: []
+  main:
+    web-application-type: reactive
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: test-secret-key-that-is-long-enough-for-hs256-algorithm
