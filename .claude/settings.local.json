@@ -127,7 +127,8 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(git reset:*)",
-      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && grep -A5 \"<build>\" {} | head -20')"
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && grep -A5 \"<build>\" {} | head -20')",
+      "Bash(git commit:*)"
     ]
   }
 }
