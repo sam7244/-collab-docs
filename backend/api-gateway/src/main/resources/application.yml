@@ -1,0 +1,90 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: authServiceCB
+                fallbackUri: forward:/fallback/auth-service
+
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/api/documents/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: documentServiceCB
+                fallbackUri: forward:/fallback/document-service
+
+        - id: presence-service
+          uri: lb://collaboration-service
+          predicates:
+            - Path=/api/presence/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: collabServiceCB
+                fallbackUri: forward:/fallback/collaboration-service
+
+        - id: oauth2-authorization
+          uri: lb://auth-service
+          predicates:
+            - Path=/oauth2/**
+
+        - id: oauth2-callback
+          uri: lb://auth-service
+          predicates:
+            - Path=/login/oauth2/**
+
+        - id: collaboration-ws
+          uri: lb:ws://collaboration-service
+          predicates:
+            - Path=/ws/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:collab-docs-super-secret-key-that-is-long-enough-for-hs256}
+
+# Resilience4j circuit breaker config
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      authServiceCB:
+        base-config: default
+      documentServiceCB:
+        base-config: default
+      collabServiceCB:
+        base-config: default
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

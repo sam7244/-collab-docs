@@ -1,0 +1,34 @@
+### Variables — replace with real values after login
+@baseUrl = http://localhost:8080/api
+@token = YOUR_TOKEN_HERE
+@docId = YOUR_DOC_ID_HERE
+
+### 1. Create document
+POST {{baseUrl}}/documents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "My First Document"
+}
+
+### 2. List documents
+GET {{baseUrl}}/documents
+Authorization: Bearer {{token}}
+
+### 3. Get document by id
+GET {{baseUrl}}/documents/{{docId}}
+Authorization: Bearer {{token}}
+
+### 4. Update title
+PATCH {{baseUrl}}/documents/{{docId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Renamed Document"
+}
+
+### 5. Delete document
+DELETE {{baseUrl}}/documents/{{docId}}
+Authorization: Bearer {{token}}

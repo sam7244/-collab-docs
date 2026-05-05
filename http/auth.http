@@ -1,0 +1,32 @@
+### Variables
+@baseUrl = http://localhost:8080/api
+@email = alice@example.com
+@password = password123
+
+### 1. Sign up
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "displayName": "Alice"
+}
+
+### 2. Log in (copy token from response into @token below)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 3. Get current user (replace YOUR_TOKEN_HERE)
+@token = YOUR_TOKEN_HERE
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### 4. Negative test — no token → 401
+GET {{baseUrl}}/auth/me
