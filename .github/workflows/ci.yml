@@ -1,0 +1,83 @@
+name: CI — Build, Test & Coverage
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  build-and-test:
+    name: Build · Test · JaCoCo · Surefire
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ── 2. Java 17 ───────────────────────────────────────────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      # ── 3. Build & Test ──────────────────────────────────────────────────
+      # `verify` runs: compile → test (Surefire) → verify (JaCoCo report)
+      # -B  : batch / non-interactive
+      # -ntp: suppress download progress noise in logs
+      - name: Run Maven verify (tests + coverage)
+        working-directory: backend
+        run: mvn verify -B -ntp
+
+      # ── 4. Upload Surefire test reports ──────────────────────────────────
+      - name: Upload Surefire reports
+        if: always()   # upload even when tests fail so you can inspect failures
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            backend/*/target/surefire-reports/*.xml
+            backend/*/target/surefire-reports/*.txt
+          retention-days: 14
+
+      # ── 5. Upload JaCoCo coverage reports ────────────────────────────────
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-reports
+          path: backend/*/target/jacoco-report/
+          retention-days: 14
+
+      # ── 6. Publish test results summary in GitHub UI ─────────────────────
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: JUnit Test Results
+          path: backend/*/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      # ── 7. Upload JAR artifacts ───────────────────────────────────────────
+      - name: Upload service JARs
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-jars
+          path: |
+            backend/auth-service/target/*.jar
+            backend/document-service/target/*.jar
+            backend/collaboration-service/target/*.jar
+            backend/api-gateway/target/*.jar
+            backend/eureka-server/target/*.jar
+          retention-days: 7
