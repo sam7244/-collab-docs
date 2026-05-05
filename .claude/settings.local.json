@@ -122,7 +122,11 @@
       "Bash(java -jar backend/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar)",
       "Bash(find /Users/shamithkumarjain/Documents/SpringBoot/collab-docs-starter/backend -type d -path \"*/src/test/java\" -exec find {} -type f \\\\;)",
       "Bash(xargs -I {} ls -la {})",
-      "Bash(./mvnw test:*)"
+      "Bash(./mvnw test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)"
     ]
   }
 }
