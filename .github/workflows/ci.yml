@@ -17,6 +17,11 @@ jobs:
     name: Build · Test · JaCoCo · Surefire
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      checks: write        # required by dorny/test-reporter to create check runs
+      pull-requests: write # required to post summary comments on PRs
+
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
       - name: Checkout source
